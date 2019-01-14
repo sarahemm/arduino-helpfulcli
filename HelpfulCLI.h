@@ -16,7 +16,7 @@
 
 #define MAX_CMDLINE 32
 
-typedef void (*cli_callback)(String);
+typedef void (*cli_callback)(String, String);
 struct cli_cmd {
   union {
     char *cmd;
@@ -47,6 +47,7 @@ class HelpfulCLI {
     struct cli_cmd *findLastCommand(struct cli_cmd *);
     void executeCommand(String);
     void displayHelp(String);
+    String stripNumbers(String);
     struct cli_cmd first_cmd;
     char *prompt;
     bool prompt_displayed;

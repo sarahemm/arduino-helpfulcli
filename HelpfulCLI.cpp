@@ -128,22 +128,19 @@ void HelpfulCLI::listCommands() {
 
 void HelpfulCLI::executeCommand(String buf) {
   struct cli_cmd *this_cmd = &first_cmd;
-  
   if(buf.length() == 0) return;
 
   Serial.println("");
+
+  String search_buf = stripNumbers(buf);
   while(this_cmd != NULL) {
-    if(this_cmd->strings_in_flash) {
-      if(buf.startsWith(this_cmd->f_cmd)) {
-        (*this_cmd->callback)(buf.substring(String(this_cmd->f_cmd).length() + 1));
-        return;
-      }        
-    } else {
-      if(buf.startsWith(this_cmd->cmd)) {
-        (*this_cmd->callback)(buf.substring(strlen(this_cmd->cmd) + 1));
-        return;
-      }
-    }
+    String cmd_str = this_cmd->strings_in_flash ? String(this_cmd->f_cmd) : String(this_cmd->cmd);
+    if(search_buf.startsWith(cmd_str)) {
+      byte extra_nbr_chars = buf.length() - stripNumbers(buf).length();
+      (*this_cmd->callback)(buf.substring(0, cmd_str.length() + extra_nbr_chars), buf.substring(cmd_str.length() + extra_nbr_chars + 1));
+      return;
+    }        
+    
     this_cmd = this_cmd->next_cmd;
   }
   Serial.println("Unknown command.");
@@ -153,7 +150,7 @@ void HelpfulCLI::executeCommand(String buf) {
 void HelpfulCLI::displayHelp(String buf) {
   Serial.println("");
   struct cli_cmd *this_cmd = &first_cmd;
-  
+  buf = stripNumbers(buf);
   while(this_cmd != NULL) {
     if(this_cmd->strings_in_flash) {
       if(buf.compareTo(String(this_cmd->f_cmd).substring(0, buf.length())) == 0) {
@@ -176,9 +173,23 @@ struct cli_cmd *HelpfulCLI::findLastCommand(struct cli_cmd *start_cmd) {
   struct cli_cmd *this_cmd = start_cmd;
   
   while(this_cmd->next_cmd != NULL) {
-    Serial.println("Searching for last...");
     this_cmd = this_cmd->next_cmd;
   }
   
   return this_cmd;
+}
+
+// replace all numbers with a single #
+String HelpfulCLI::stripNumbers(String str) {
+  // TODO: this seems inelegant and could use cleaning up
+  byte i;
+  for(i=0; i<=9; i++) {
+    str.replace(String(i), "#");
+  }
+  str.replace("-#", "#");
+  for(i=0; i<=9; i++) {
+    str.replace("##", "#");
+  }
+  
+  return str;
 }
