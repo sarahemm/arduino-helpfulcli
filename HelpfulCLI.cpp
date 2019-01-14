@@ -88,6 +88,7 @@ void HelpfulCLI::service(void) {
     char new_char = Serial.read();
     switch(new_char) {
       case '\r':
+        Serial.println("");
         executeCommand(String(buffer));
         buffer[0] = (char)0;
         prompt_displayed = false;
@@ -146,7 +147,9 @@ void HelpfulCLI::executeCommand(String buf) {
     String cmd_str = this_cmd->strings_in_flash ? String(this_cmd->f_cmd) : String(this_cmd->cmd);
     if(search_buf.startsWith(cmd_str)) {
       byte extra_nbr_chars = buf.length() - stripNumbers(buf).length();
-      (*this_cmd->callback)(buf.substring(0, cmd_str.length() + extra_nbr_chars), buf.substring(cmd_str.length() + extra_nbr_chars + 1));
+      signed long nbr_buf[MAX_NBR_ARGS];
+      extractNumbers(buf, nbr_buf);
+      (*this_cmd->callback)(buf.substring(0, cmd_str.length() + extra_nbr_chars), buf.substring(cmd_str.length() + extra_nbr_chars + 1), nbr_buf);
       return;
     }        
     
@@ -201,4 +204,24 @@ String HelpfulCLI::stripNumbers(String str) {
   }
   
   return str;
+}
+ 
+// extract any numbers from the string into an array
+void HelpfulCLI::extractNumbers(String buf, signed long nbrs[]) {
+  byte i;
+
+  byte cur_nbr = 0;
+  bool currently_in_nbr;
+  for(i=0; i<buf.length(); i++) {
+    if(
+      (buf.charAt(i) >= '0' && buf.charAt(i) <= '9') ||
+      (i < buf.length() && buf.charAt(i) == '-' && buf.charAt(i+1) >= '0' && buf.charAt(i+1) <= '9')
+    ) {
+      if(currently_in_nbr) continue;
+      currently_in_nbr = true;
+      nbrs[cur_nbr++] = buf.substring(i).toInt();
+    } else {
+      currently_in_nbr = false;
+    }
+  }
 }

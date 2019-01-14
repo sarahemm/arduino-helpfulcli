@@ -14,9 +14,10 @@
 // include core Arduino API
 #include "Arduino.h"
 
-#define MAX_CMDLINE 32
+#define MAX_CMDLINE   32
+#define MAX_NBR_ARGS  4
 
-typedef void (*cli_callback)(String, String);
+typedef void (*cli_callback)(String, String, signed long []);
 struct cli_cmd {
   union {
     char *cmd;
@@ -48,6 +49,7 @@ class HelpfulCLI {
     void executeCommand(String);
     void displayHelp(String);
     String stripNumbers(String);
+    void extractNumbers(String, signed long []);
     struct cli_cmd first_cmd;
     char *prompt;
     bool prompt_displayed;
