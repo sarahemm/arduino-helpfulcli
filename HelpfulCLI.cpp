@@ -85,18 +85,27 @@ void HelpfulCLI::service(void) {
   if(Serial.available() == 0) return;
   
   while(Serial.available() != 0) {
-    buffer[strlen(buffer) + 1] = (char)0;
-    buffer[strlen(buffer)] = Serial.read();
-    Serial.print(buffer[strlen(buffer)-1]);
-    if(buffer[strlen(buffer)-1] == '\r') {
-      buffer[strlen(buffer)-1] = (char)0;
-      executeCommand(String(buffer));
-      buffer[0] = (char)0;
-      prompt_displayed = false;
-    } else if(buffer[strlen(buffer)-1] == '?') {
-      buffer[strlen(buffer)-1] = (char)0;
-      displayHelp(String(buffer));
-      prompt_displayed = false;
+    char new_char = Serial.read();
+    switch(new_char) {
+      case '\r':
+        executeCommand(String(buffer));
+        buffer[0] = (char)0;
+        prompt_displayed = false;
+        break;
+      case 0x7F: // backspace/DEL
+        if(strlen(buffer) == 0) break;
+        Serial.print("\b \b");
+        buffer[strlen(buffer) - 1] = (char)0;
+        break;
+      case '?':
+        Serial.println("?");
+        displayHelp(String(buffer));
+        prompt_displayed = false;
+        break;
+      default:
+        buffer[strlen(buffer) + 1] = (char)0;
+        buffer[strlen(buffer)] = new_char;
+        Serial.print(new_char);
     }
   }
 }
